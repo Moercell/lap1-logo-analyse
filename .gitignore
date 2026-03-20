@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+.vercel/
+
+*.log
+USER_ACTIVITY.log
+.next-dev.out.log
+.next-dev.err.log
+*.tsbuildinfo
+
+coverage/
+.DS_Store
+Thumbs.db
