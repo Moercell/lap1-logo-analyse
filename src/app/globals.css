@@ -53,6 +53,17 @@ button {
   padding: 28px 0 80px;
 }
 
+.page-brand {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.page-brand img {
+  width: 180px;
+  height: auto;
+}
+
 .hero {
   position: relative;
   overflow: hidden;
@@ -66,14 +77,9 @@ button {
 
 .hero-brand {
   display: grid;
-  gap: 14px;
+  gap: 4px;
   align-content: start;
-  margin-bottom: 16px;
-}
-
-.hero-brand img {
-  width: 180px;
-  height: auto;
+  margin-bottom: 12px;
 }
 
 .eyebrow,
@@ -649,7 +655,7 @@ tbody tr:hover,
     padding: 34px 22px;
   }
 
-  .hero-brand img {
+  .page-brand img {
     width: 150px;
   }
 

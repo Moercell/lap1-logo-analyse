@@ -3,6 +3,7 @@
 import { startTransition, useDeferredValue, useState } from "react";
 
 import { ProcessDurationChart } from "@/components/process-duration-chart";
+import { analyseLogBuffer } from "@/lib/log-parser";
 import type { AnalysisReport, AntragSummary, StepStat, TransitionStat, UserSummary } from "@/lib/log-types";
 import { STEP_SEQUENCE } from "@/lib/log-types";
 
@@ -111,21 +112,13 @@ export function LogAnalyser() {
   const maxTransitionCount = Math.max(...transitionStats.map((item) => item.count), 1);
   const reportGeneratedAt = formatDate(new Date().toISOString());
 
-  async function analyseUpload(endpoint: string, body?: FormData) {
+  async function analyseSelectedFile(selectedFile: File) {
     try {
       setErrorMessage(null);
-
-      const response = await fetch(endpoint, {
-        method: body ? "POST" : "GET",
-        body,
+      const nextReport = analyseLogBuffer(await selectedFile.arrayBuffer(), {
+        fileName: selectedFile.name,
+        sizeBytes: selectedFile.size,
       });
-
-      if (!response.ok) {
-        const errorPayload = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(errorPayload?.error ?? "Die Analyse konnte nicht gestartet werden.");
-      }
-
-      const nextReport = (await response.json()) as AnalysisReport;
 
       startTransition(() => {
         setReport(nextReport);
@@ -148,10 +141,8 @@ export function LogAnalyser() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
     setLoadingState("uploading");
-    await analyseUpload("/api/analyse", formData);
+    await analyseSelectedFile(file);
   }
 
   function handlePrint() {
@@ -165,7 +156,8 @@ export function LogAnalyser() {
           <p className="section-kicker">Ingest</p>
           <h2>Log-Datei analysieren</h2>
           <p className="section-copy">
-            Upload per Browser. Die Analyse läuft serverseitig und verarbeitet nur die PdbWizard-Zeilen.
+            Upload per Browser. Die Analyse läuft lokal im Browser und verarbeitet nur die PdbWizard-Zeilen, ohne die
+            Datei an den Server zu senden.
           </p>
         </div>
 
