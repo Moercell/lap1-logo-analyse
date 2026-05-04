@@ -73,6 +73,7 @@ function formatTenantLabel(report: AnalysisReport): string {
 
 export default function PdfReportPage() {
   const snapshotIdRef = useRef<string | null>(null);
+  const conclusionInputRef = useRef<HTMLDivElement | null>(null);
   const [snapshot, setSnapshot] = useState<ReportSnapshot | null>(null);
   const [conclusionText, setConclusionText] = useState("");
 
@@ -90,6 +91,14 @@ export default function PdfReportPage() {
       setConclusionText(nextSnapshot?.conclusionText ?? "");
     });
   }, []);
+
+  useEffect(() => {
+    if (!conclusionInputRef.current || conclusionInputRef.current.innerText === conclusionText) {
+      return;
+    }
+
+    conclusionInputRef.current.innerText = conclusionText;
+  }, [conclusionText]);
 
   const report = snapshot?.report ?? null;
   const normalizedSearch = snapshot?.searchText.trim().toLowerCase() ?? "";
@@ -279,12 +288,15 @@ export default function PdfReportPage() {
             <div className="pdf-section-title">
               <h2>Fazit</h2>
             </div>
-            <textarea
+            <div
               aria-label="Fazit für den PDF-Bericht"
               className="pdf-conclusion-input"
-              onChange={(event) => handleConclusionChange(event.target.value)}
-              placeholder="Fazit, Einschätzung oder Handlungsempfehlung für den Kundenreport eintragen..."
-              value={conclusionText}
+              contentEditable
+              data-placeholder="Fazit, Einschätzung oder Handlungsempfehlung für den Kundenreport eintragen..."
+              ref={conclusionInputRef}
+              onInput={(event) => handleConclusionChange(event.currentTarget.innerText)}
+              role="textbox"
+              suppressContentEditableWarning
             />
           </section>
         </section>

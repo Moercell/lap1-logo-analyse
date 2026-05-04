@@ -878,16 +878,19 @@ tbody tr:hover,
   width: 100%;
   min-height: 38mm;
   border: 0;
-  resize: vertical;
   outline: none;
   background: transparent;
   color: #172d3f;
   font: inherit;
   line-height: 1.65;
+  white-space: pre-wrap;
+  overflow: visible;
 }
 
-.pdf-conclusion-input::placeholder {
+.pdf-conclusion-input:empty::before {
+  content: attr(data-placeholder);
   color: #8b949c;
+  pointer-events: none;
 }
 
 .pdf-two-column {
@@ -1490,8 +1493,8 @@ tbody tr:hover,
 
   .pdf-conclusion-input {
     min-height: 34mm;
-    resize: none;
     font-size: 10pt;
+    overflow: visible !important;
   }
 
   .pdf-conclusion-detail-page {
@@ -1508,7 +1511,7 @@ tbody tr:hover,
     gap: 8px;
   }
 
-  .pdf-conclusion-input::placeholder {
+  .pdf-conclusion-input:empty::before {
     color: transparent;
   }
 
