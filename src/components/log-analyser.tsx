@@ -4,6 +4,7 @@ import { startTransition, useDeferredValue, useState } from "react";
 
 import { ProcessDurationChart } from "@/components/process-duration-chart";
 import { analyseLogBuffer } from "@/lib/log-parser";
+import { buildReportSnapshot, saveReportSnapshot } from "@/lib/report-storage";
 import type { AnalysisReport, AntragSummary, StepStat, TransitionStat, UserSummary } from "@/lib/log-types";
 import { STEP_SEQUENCE } from "@/lib/log-types";
 
@@ -145,8 +146,33 @@ export function LogAnalyser() {
     await analyseSelectedFile(file);
   }
 
-  function handlePrint() {
-    window.print();
+  async function handleOpenPdfReport() {
+    if (!report) {
+      return;
+    }
+
+    const reportWindow = window.open("about:blank", "_blank");
+
+    try {
+      const snapshot = buildReportSnapshot({
+        report,
+        selectedAntragId: selectedAntrag?.antragId ?? null,
+        searchText,
+        userFilter,
+        conclusionText: "",
+      });
+      const snapshotId = await saveReportSnapshot(snapshot);
+      const reportUrl = `/report?snapshot=${encodeURIComponent(snapshotId)}`;
+
+      if (reportWindow) {
+        reportWindow.location.href = reportUrl;
+      } else {
+        window.location.href = reportUrl;
+      }
+    } catch (error) {
+      reportWindow?.close();
+      setErrorMessage(error instanceof Error ? error.message : "PDF-Report konnte nicht vorbereitet werden.");
+    }
   }
 
   return (
@@ -186,14 +212,14 @@ export function LogAnalyser() {
           <section className="panel report-toolbar no-print">
             <div>
               <p className="section-kicker">Report</p>
-              <h2>Druck- und Reportansicht</h2>
+              <h2>PDF-Bericht</h2>
               <p className="section-copy">
-                Der Druck übernimmt die aktuelle Filterung und blendet alle interaktiven Bedienelemente aus.
+                Öffnet die aktuelle Analyse mit Filterung und Auswahl in einem neuen Tab als optimierte PDF-Ansicht.
               </p>
             </div>
             <div className="button-row">
-              <button onClick={handlePrint} type="button">
-                Report drucken
+              <button onClick={handleOpenPdfReport} type="button">
+                PDF-Bericht öffnen
               </button>
             </div>
           </section>
