@@ -12,15 +12,20 @@ import {
   LineElement,
   LinearScale,
   PointElement,
+  type Plugin,
   Title,
   Tooltip,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 
 import type { AntragSummary } from "@/lib/log-types";
-import { buildDurationChartPoints } from "@/lib/report-chart-data";
+import { buildCalendarDateMarker, buildDurationChartPoints, buildDurationChartWindow } from "@/lib/report-chart-data";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
+
+const UPDATE_MARKER_LABEL = "Update 01.07.";
+const UPDATE_MARKER_MONTH = 7;
+const UPDATE_MARKER_DAY = 1;
 
 interface ReportDurationChartProps {
   antraege: AntragSummary[];
@@ -64,19 +69,61 @@ function formatAxisDuration(value: number | string): string {
 }
 
 export function ReportDurationChart({ antraege, selectedAntragId }: ReportDurationChartProps) {
-  const points = useMemo(
-    () =>
-      buildDurationChartPoints(antraege, {
-        limit: 90,
-        selectedAntragId,
-      }),
-    [antraege, selectedAntragId],
-  );
+  const chartView = useMemo(() => {
+    const allPoints = buildDurationChartPoints(antraege, {
+      limit: 0,
+      selectedAntragId,
+    });
+    const updateMarker = buildCalendarDateMarker(allPoints, {
+      day: UPDATE_MARKER_DAY,
+      label: UPDATE_MARKER_LABEL,
+      month: UPDATE_MARKER_MONTH,
+    });
+
+    return buildDurationChartWindow(allPoints, {
+      limit: 90,
+      marker: updateMarker,
+    });
+  }, [antraege, selectedAntragId]);
+  const points = chartView.points;
+  const updateMarker = chartView.marker;
   const selectedPointIndex = points.findIndex((point) => point.selected);
+  const selectedPoint = selectedPointIndex > -1 ? points[selectedPointIndex] : null;
   const labels = points.map((_, index) => `${index + 1}`);
   const maxDuration = Math.max(...points.map((point) => point.durationSeconds), 1);
   const averageDuration =
     points.length > 0 ? points.reduce((sum, point) => sum + point.durationSeconds, 0) / points.length : 0;
+  const updateMarkerPlugin = useMemo<Plugin<"line">>(
+    () => ({
+      id: "update-marker",
+      afterDraw(chart) {
+        if (!updateMarker) {
+          return;
+        }
+
+        const xScale = chart.scales.x;
+        const markerX = xScale.getPixelForValue(updateMarker.targetIndex);
+        const { bottom, top } = chart.chartArea;
+        const { ctx } = chart;
+
+        ctx.save();
+        ctx.strokeStyle = "#b27818";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(markerX, top);
+        ctx.lineTo(markerX, bottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "#172d3f";
+        ctx.font = "700 11px Open Sans, Segoe UI, sans-serif";
+        ctx.textAlign = markerX > chart.width - 120 ? "right" : "left";
+        ctx.fillText(updateMarker.label, markerX + (markerX > chart.width - 120 ? -8 : 8), top + 14);
+        ctx.restore();
+      },
+    }),
+    [updateMarker],
+  );
 
   const chartData = useMemo<ChartData<"line">>(() => {
     const datasets: ChartDataset<"line">[] = [
@@ -88,8 +135,8 @@ export function ReportDurationChart({ antraege, selectedAntragId }: ReportDurati
         borderWidth: 3,
         pointRadius: 2.8,
         pointHoverRadius: 5,
-        pointBackgroundColor: "#ffffff",
-        pointBorderColor: "#0a6ea0",
+        pointBackgroundColor: points.map((point) => (point.completed ? "#ffffff" : "#b94b3e")),
+        pointBorderColor: points.map((point) => (point.completed ? "#0a6ea0" : "#b94b3e")),
         pointBorderWidth: 1.8,
         fill: true,
         tension: 0.25,
@@ -109,11 +156,11 @@ export function ReportDurationChart({ antraege, selectedAntragId }: ReportDurati
       datasets.push({
         label: "Ausgewählter Vorgang",
         data: points.map((point, index) => (index === selectedPointIndex ? point.durationSeconds : null)),
-        borderColor: "#b94b3e",
-        backgroundColor: "#b94b3e",
+        borderColor: "#172d3f",
+        backgroundColor: selectedPoint?.completed ? "#ffffff" : "#b94b3e",
         pointRadius: 7,
         pointHoverRadius: 7,
-        pointBorderColor: "#ffffff",
+        pointBorderColor: "#172d3f",
         pointBorderWidth: 3,
         showLine: false,
       });
@@ -123,7 +170,7 @@ export function ReportDurationChart({ antraege, selectedAntragId }: ReportDurati
       labels,
       datasets,
     };
-  }, [averageDuration, labels, points, selectedPointIndex]);
+  }, [averageDuration, labels, points, selectedPoint, selectedPointIndex]);
 
   const chartOptions = useMemo<ChartOptions<"line">>(
     () => ({
@@ -244,15 +291,25 @@ export function ReportDurationChart({ antraege, selectedAntragId }: ReportDurati
             <span>Durchschnitt</span>
             <strong>{formatDuration(averageDuration)}</strong>
           </article>
+          {updateMarker ? (
+            <article>
+              <span>Update</span>
+              <strong>01.07.</strong>
+              <small>
+                {updateMarker.beforeCount} davor / {updateMarker.afterCount} danach
+              </small>
+            </article>
+          ) : null}
         </div>
       </div>
 
       <div className="pdf-duration-chart-shell">
-        <Line data={chartData} options={chartOptions} />
+        <Line data={chartData} options={chartOptions} plugins={[updateMarkerPlugin]} />
       </div>
       <p className="pdf-duration-chart-note">
         Der Graph zeigt die letzten sichtbaren Vorgänge im aktuellen Filter chronologisch. Die grüne Linie markiert den
-        Durchschnitt, der rote Punkt den ausgewählten Vorgang.
+        Durchschnitt, rote Punkte markieren nicht abgeschlossene Vorgänge. Die vertikale Linie markiert das Update am
+        01.07.
       </p>
     </section>
   );

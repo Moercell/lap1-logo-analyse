@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ReportDurationChart } from "@/components/report-duration-chart";
+import { ReportWeeklyActivity } from "@/components/report-weekly-activity";
 import { loadReportSnapshot, updateStoredConclusionText, type ReportSnapshot } from "@/lib/report-storage";
+import { buildReportSummary } from "@/lib/report-summary";
 import type { AnalysisReport, AntragSummary } from "@/lib/log-types";
 
 const TENANT_NAMES: Record<string, string> = {
@@ -118,6 +120,7 @@ export default function PdfReportPage() {
       return matchesUser && matchesSearch;
     });
   }, [normalizedSearch, report, snapshot]);
+  const filteredSummary = useMemo(() => buildReportSummary(filteredAntraege), [filteredAntraege]);
   const selectedAntrag =
     filteredAntraege.find((antrag) => antrag.antragId === snapshot?.selectedAntragId) ?? filteredAntraege[0] ?? null;
   const tenantLabel = report ? formatTenantLabel(report) : "";
@@ -200,35 +203,35 @@ export default function PdfReportPage() {
           <div className="pdf-kpi-grid">
             <article>
               <span>Vorgänge</span>
-              <strong>{formatNumber(filteredAntraege.length)}</strong>
-              <small>{formatNumber(report.meta.transitionEventCount)} Übergänge gesamt</small>
+              <strong>{formatNumber(filteredSummary.uniqueAntraege)}</strong>
+              <small>{formatNumber(filteredSummary.transitionEventCount)} Übergänge im Filter</small>
             </article>
             <article>
               <span>Abgeschlossen</span>
-              <strong>{formatNumber(report.overview.completedAntraege)}</strong>
-              <small>{formatNumber(report.overview.openAntraege)} offen</small>
+              <strong>{formatNumber(filteredSummary.completedAntraege)}</strong>
+              <small>{formatNumber(filteredSummary.openAntraege)} offen</small>
             </article>
             <article>
               <span>Durchschnitt</span>
-              <strong>{formatDuration(report.overview.averageCompletedSeconds)}</strong>
+              <strong>{formatDuration(filteredSummary.averageCompletedSeconds)}</strong>
               <small>bis zum Abschluss</small>
             </article>
             <article>
               <span>Nutzer</span>
-              <strong>{formatNumber(report.overview.uniqueUsers)}</strong>
-              <small>{formatNumber(report.overview.uniqueTenants)} Tenant</small>
+              <strong>{formatNumber(filteredSummary.uniqueUsers)}</strong>
+              <small>{formatNumber(filteredSummary.uniqueTenants)} Tenant</small>
             </article>
             <article>
               <span>Rücksprünge</span>
-              <strong>{formatNumber(report.overview.backtrackTransitions)}</strong>
-              <small>{formatNumber(report.overview.repeatTransitions)} Wiederholungen</small>
+              <strong>{formatNumber(filteredSummary.backtrackTransitions)}</strong>
+              <small>{formatNumber(filteredSummary.repeatTransitions)} Wiederholungen</small>
             </article>
           </div>
 
           <div className="pdf-summary-copy">
             <p>
-              Im aktuellen Filter sind {formatNumber(filteredAntraege.length)} Vorgänge enthalten. Die mittlere
-              abgeschlossene Durchlaufzeit liegt bei {formatDuration(report.overview.averageCompletedSeconds)}.
+              Im aktuellen Filter sind {formatNumber(filteredSummary.uniqueAntraege)} Vorgänge enthalten. Die mittlere
+              abgeschlossene Durchlaufzeit liegt bei {formatDuration(filteredSummary.averageCompletedSeconds)}.
             </p>
             <p>
               Der Report berücksichtigt den Filter <strong>{snapshot.userFilter === "ALL" ? "Alle Nutzer" : snapshot.userFilter}</strong>
@@ -238,6 +241,8 @@ export default function PdfReportPage() {
         </section>
 
         <ReportDurationChart antraege={filteredAntraege} selectedAntragId={selectedAntrag?.antragId ?? null} />
+
+        <ReportWeeklyActivity antraege={filteredAntraege} />
 
         <section className="pdf-section pdf-conclusion-detail-page">
           <section className="pdf-detail-section">

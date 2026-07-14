@@ -997,7 +997,7 @@ tbody tr:hover,
 
 .pdf-duration-chart-metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(30mm, 1fr));
+  grid-template-columns: repeat(4, minmax(26mm, 1fr));
   gap: 8px;
 }
 
@@ -1045,6 +1045,94 @@ tbody tr:hover,
   border: 1px solid rgba(19, 52, 76, 0.14);
   background: #f8fbfc;
   text-align: center;
+}
+
+.pdf-weekly-activity-section {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid rgba(19, 52, 76, 0.14);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbfc 100%);
+  break-inside: avoid;
+}
+
+.pdf-weekly-activity-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(24mm, 1fr));
+  gap: 8px;
+  max-width: 62mm;
+}
+
+.pdf-weekly-activity-meta article {
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+  border: 1px solid rgba(19, 52, 76, 0.12);
+  background: #ffffff;
+}
+
+.pdf-weekly-activity-meta span {
+  color: #5d6670;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+.pdf-weekly-activity-meta strong {
+  color: #0a6ea0;
+}
+
+.pdf-weekly-grid {
+  display: grid;
+  gap: 3px;
+  align-items: stretch;
+}
+
+.pdf-weekly-grid-row {
+  display: contents;
+}
+
+.pdf-weekly-grid-day,
+.pdf-weekly-grid-hour,
+.pdf-weekly-cell {
+  min-height: 8mm;
+  display: grid;
+  place-items: center;
+}
+
+.pdf-weekly-grid-day,
+.pdf-weekly-grid-hour {
+  color: #5d6670;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.pdf-weekly-grid-day {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pdf-weekly-grid-hour {
+  justify-items: start;
+}
+
+.pdf-weekly-cell {
+  border: 1px solid rgba(19, 52, 76, 0.1);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.pdf-weekly-cell:not(.has-activity) {
+  background: rgba(19, 52, 76, 0.03) !important;
+}
+
+.pdf-weekly-activity-note {
+  margin: 0;
+  color: #5d6670;
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
 @media (max-width: 1100px) {
@@ -1464,7 +1552,7 @@ tbody tr:hover,
   }
 
   .pdf-duration-chart-metrics {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 5px;
   }
 
@@ -1488,6 +1576,36 @@ tbody tr:hover,
   }
 
   .pdf-duration-chart-note {
+    font-size: 8pt;
+  }
+
+  .pdf-weekly-activity-section {
+    gap: 8px;
+    padding: 10px;
+    background: white !important;
+  }
+
+  .pdf-weekly-activity-meta article {
+    padding: 5px 6px;
+    background: white !important;
+  }
+
+  .pdf-weekly-activity-meta span {
+    font-size: 7pt;
+  }
+
+  .pdf-weekly-grid {
+    gap: 2px;
+  }
+
+  .pdf-weekly-grid-day,
+  .pdf-weekly-grid-hour,
+  .pdf-weekly-cell {
+    min-height: 5mm;
+    font-size: 7pt;
+  }
+
+  .pdf-weekly-activity-note {
     font-size: 8pt;
   }
 
